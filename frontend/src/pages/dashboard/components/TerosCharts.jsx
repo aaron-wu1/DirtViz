@@ -151,6 +151,7 @@ function TerosCharts({ cells, startDate, endDate, stream }) {
     streamTerosChartData().then((cellChartData) => {
       let selectCounter = 0;
       let foundNewData = false;
+      // checks if datasets exist already
       if (newVwcChartData.datasets.length) {
         for (const { id } of cells) {
           const cellid = id;
@@ -172,17 +173,18 @@ function TerosCharts({ cells, startDate, endDate, stream }) {
             const tTimestamp = terosData.timestamp.map((dateTime) => DateTime.fromHTTP(dateTime));
             // set vwc chart
             newVwcChartData.labels = newVwcChartData.labels.concat(tTimestamp);
-            newVwcChartData.datasets[selectCounter].data = newVwcChartData.datasets[selectCounter].data.concat(
-              terosData.vwc,
-            );
-            newVwcChartData.datasets[selectCounter + 1].data = newVwcChartData.datasets[selectCounter + 1].data.concat(
-              terosData.ec,
-            );
-            // set temp chart
+            const tempData = createDataset(tTimestamp, terosData.temp);
+            const vwcData = createDataset(tTimestamp, terosData.vwc);
+            const ecData = createDataset(tTimestamp, terosData.ec);
+            // set vwc
+            newVwcChartData.datasets[selectCounter].data = newVwcChartData.datasets[selectCounter].data.concat(vwcData);
+            // set ec
+            newVwcChartData.datasets[selectCounter + 1].data =
+              newVwcChartData.datasets[selectCounter + 1].data.concat(ecData);
+            // set temp
             newTempChartData.labels = newTempChartData.labels.concat(tTimestamp);
-            newTempChartData.datasets[selectCounter].data = newTempChartData.datasets[selectCounter].data.concat(
-              terosData.temp,
-            );
+            newTempChartData.datasets[selectCounter].data =
+              newTempChartData.datasets[selectCounter].data.concat(tempData);
             selectCounter += 1;
           }
         }
@@ -193,10 +195,13 @@ function TerosCharts({ cells, startDate, endDate, stream }) {
           const terosData = cellChartData[cellid].terosData;
           const tTimestamp = terosData.timestamp.map((dateTime) => DateTime.fromHTTP(dateTime));
           newVwcChartData.labels = tTimestamp;
+          const tempData = createDataset(tTimestamp, terosData.temp);
+          const vwcData = createDataset(tTimestamp, terosData.vwc);
+          const ecData = createDataset(tTimestamp, terosData.ec);
           newVwcChartData.datasets.push(
             {
               label: name + ' Volumetric Water Content (%)',
-              data: terosData.vwc,
+              data: vwcData,
               borderColor: vwcColors[selectCounter],
               borderWidth: 2,
               fill: false,
@@ -206,7 +211,7 @@ function TerosCharts({ cells, startDate, endDate, stream }) {
             },
             {
               label: name + ' Electrical Conductivity (µS/cm)',
-              data: terosData.ec,
+              data: ecData,
               borderColor: ecColors[selectCounter],
               borderWidth: 2,
               fill: false,
@@ -220,7 +225,7 @@ function TerosCharts({ cells, startDate, endDate, stream }) {
           newTempChartData.labels = tTimestamp;
           newTempChartData.datasets.push({
             label: name + ' Temperature (°C)',
-            data: terosData.temp,
+            data: tempData,
             borderColor: tempColors[selectCounter],
             borderWidth: 2,
             fill: false,

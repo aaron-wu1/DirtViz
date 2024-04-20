@@ -151,6 +151,7 @@ function PowerCharts({ cells, startDate, endDate, stream }) {
     streamPowerChartData().then((cellChartData) => {
       let selectCounter = 0;
       let foundNewData = false;
+      // checks if datasets exist already
       if (newVChartData.datasets.length) {
         for (const { id } of cells) {
           const cellid = id;
@@ -171,15 +172,16 @@ function PowerCharts({ cells, startDate, endDate, stream }) {
             );
             const pTimestamp = powerData.timestamp.map((dateTime) => DateTime.fromHTTP(dateTime));
             newVChartData.labels = newVChartData.labels.concat(pTimestamp);
-            newVChartData.datasets[selectCounter].data = newVChartData.datasets[selectCounter].data.concat(powerData.v);
-            newVChartData.datasets[selectCounter + 1].data = newVChartData.datasets[selectCounter + 1].data.concat(
-              powerData.i,
-            );
-            //power data
-            newPwrChartData.labels = newPwrChartData.labels.concat(pTimestamp);
-            newPwrChartData.datasets[selectCounter].data = newPwrChartData.datasets[selectCounter].data.concat(
-              powerData.p,
-            );
+            const vData = createDataset(pTimestamp, powerData.v);
+            const iData = createDataset(pTimestamp, powerData.i);
+            const pData = createDataset(pTimestamp, powerData.p);
+            // set v
+            newVChartData.datasets[selectCounter].data = newVChartData.datasets[selectCounter].data.concat(vData);
+            // set current
+            newVChartData.datasets[selectCounter + 1].data =
+              newVChartData.datasets[selectCounter + 1].data.concat(iData);
+            //set pwr
+            newPwrChartData.datasets[selectCounter].data = newPwrChartData.datasets[selectCounter].data.concat(pData);
             selectCounter += 1;
           }
         }
@@ -190,10 +192,13 @@ function PowerCharts({ cells, startDate, endDate, stream }) {
           const powerData = cellChartData[cellid].powerData;
           const pTimestamp = powerData.timestamp.map((dateTime) => DateTime.fromHTTP(dateTime));
           newVChartData.labels = pTimestamp;
+          const vData = createDataset(pTimestamp, powerData.v);
+          const iData = createDataset(pTimestamp, powerData.i);
+          const pData = createDataset(pTimestamp, powerData.p);
           newVChartData.datasets.push(
             {
               label: name + ' Voltage (mV)',
-              data: powerData.v,
+              data: vData,
               borderColor: vColors[selectCounter],
               borderWidth: 2,
               fill: false,
@@ -203,7 +208,7 @@ function PowerCharts({ cells, startDate, endDate, stream }) {
             },
             {
               label: name + ' Current (µA)',
-              data: powerData.i,
+              data: iData,
               borderColor: iColors[selectCounter],
               borderWidth: 2,
               fill: false,
@@ -216,7 +221,7 @@ function PowerCharts({ cells, startDate, endDate, stream }) {
           newPwrChartData.labels = pTimestamp;
           newPwrChartData.datasets.push({
             label: name + ' Power (µW)',
-            data: powerData.p,
+            data: pData,
             borderColor: pColors[selectCounter],
             borderWidth: 2,
             fill: false,
